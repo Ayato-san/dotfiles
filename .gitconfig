@@ -1,0 +1,18 @@
+[user]
+  name = Ayato-san
+  email = dev.github.collision@p.ayato-san.fr
+
+[core]
+  autocrlf = false
+
+[init]
+  defaultBranch = main
+	
+[push]
+  autoSetupRemote = true
+
+[commit]
+  template = "~/.gitmessage"
+
+[fetch]
+  prune = true
