@@ -11,8 +11,12 @@
 [push]
   autoSetupRemote = true
 
+[pull]
+	rebase = true
+
 [commit]
   template = "~/.gitmessage"
 
 [fetch]
   prune = true
+

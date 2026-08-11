@@ -46,11 +46,11 @@ bindkey '^n' history-search-forward
 # Edit command line
 autoload -Uz edit-command-line
 zle -N edit-command-line
-bindkey '^X^E' edit-command-line 
+bindkey '^x^e' edit-command-line
 
 # History
 HISTSIZE=5000
-HISTFILE=~/.zsh_history
+HISTFILE=~/.local/share/zsh/history
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
 setopt appendhistory
@@ -83,9 +83,11 @@ alias c='clear'
 # Editor Aliases
 alias nano='$EDITOR'
 alias vim='$EDITOR'
-alias nvim='$EDITOR'
 
 # Suffix Aliases
+alias -s mov="open"
+alias -s png="open"
+alias -s mp4="open"
 alias -s js='$EDITOR'
 alias -s ts='$EDITOR'
 
