@@ -64,9 +64,9 @@
       homebrew = {
         enable = true;
         onActivation = {
-          autoUpdate = false;
-          upgrade = false;
-          cleanup = "uninstall";
+          autoUpdate = true;
+          upgrade = true;
+          cleanup = "zap";
         };
         brews = [];
         casks = [
