@@ -37,6 +37,7 @@
       environment.systemPackages =
         [ 
           pkgs.alacritty
+          pkgs.ast-grep
           pkgs.eza
           pkgs.fd
           pkgs.ffmpeg
@@ -44,6 +45,8 @@
           pkgs.gh
           pkgs.git
           pkgs.imagemagick
+          pkgs.lazygit
+          pkgs.luarocks
           pkgs.localsend
           pkgs.moonlight-qt
           pkgs.neovim
@@ -53,11 +56,14 @@
           pkgs.proton-pass-cli
           pkgs.proton-vpn
           pkgs.python3
+          pkgs.rust-analyzer
+          pkgs.rustup
           pkgs.ripgrep
           pkgs.spotify
           pkgs.stow
           pkgs.tealdeer
           pkgs.tmux
+          pkgs.wget
         ];
 
       # Homebrew packages installed in system profile.
