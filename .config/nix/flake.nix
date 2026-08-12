@@ -77,6 +77,7 @@
           "font-poppins"
           "proton-mail"
           "proton-drive"
+          "steam"
           "zen"
         ];
       };
