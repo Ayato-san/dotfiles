@@ -27,6 +27,9 @@
                 cp ${./assets/alacritty.icns} $out/Applications/Alacritty.app/Contents/Resources/alacritty.icns
               '';
           });
+          moonlight-qt = prev.moonlight-qt.override {
+            ffmpeg = prev.ffmpeg_7;
+          };
         })
       ];
 
@@ -38,6 +41,8 @@
         [ 
           pkgs.alacritty
           pkgs.ast-grep
+          pkgs.bat
+          pkgs.delta
           pkgs.eza
           pkgs.fd
           pkgs.ffmpeg
