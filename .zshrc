@@ -134,3 +134,17 @@ _fzf_comprun() {
 
 # Shell integrations
 eval "$(fzf --zsh)"
+
+# Custom functions
+# Verify if the SSH agent is running
+ssh_status() {
+  pass-cli ssh-agent daemon status | sed -n '1p'
+}
+# Stop the SSH agent
+ssh_stop() {
+  pass-cli ssh-agent daemon stop | sed -n '1p'
+}
+# Start the SSH agent for Home Cloud
+ssh_start_homecloud() {
+  pass-cli ssh-agent daemon start --vault-name 'Home Cloud' | sed -n '1p'
+}

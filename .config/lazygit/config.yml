@@ -1,3 +1,9 @@
+gui:
+  nerdFontsVersion: "3"
+  shortTimeFormat: "15:04"
 git:
   diffRenderers:
     - command: delta --config="$HOME/.config/delta/.gitconfig" --dark --paging=never --side-by-side
+  log:
+    showGraph: when-maximised
+    showWholeGraph: true

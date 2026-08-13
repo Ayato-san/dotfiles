@@ -40,6 +40,7 @@
       environment.systemPackages =
         [ 
           pkgs.alacritty
+          pkgs.ansible
           pkgs.ast-grep
           pkgs.bat
           pkgs.delta
@@ -50,6 +51,7 @@
           pkgs.gh
           pkgs.git
           pkgs.imagemagick
+          pkgs.kubectl
           pkgs.lazygit
           pkgs.luarocks
           pkgs.localsend
@@ -67,8 +69,10 @@
           pkgs.spotify
           pkgs.stow
           pkgs.tealdeer
+          pkgs.terraform
           pkgs.tmux
           pkgs.wget
+          pkgs.yarn-berry
         ];
 
       # Homebrew packages installed in system profile.
@@ -132,6 +136,7 @@
         builtins.elem (pkgs.lib.getName pkg) [
           "notion-app"
           "spotify"
+          "terraform"
         ];
 
       # Enable alternative shell support in nix-darwin.
