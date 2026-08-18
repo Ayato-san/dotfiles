@@ -93,6 +93,10 @@ alias tree="$CMD_TREE"
 alias c='clear'
 alias bat="$CMD_BAT"
 
+# Scripts aliases
+alias supdate="$HOME/dotfiles/scripts/update.sh"
+alias sinstall="$HOME/dotfiles/scripts/install.sh"
+
 # Editor Aliases
 alias nano='$EDITOR'
 alias vim='$EDITOR'

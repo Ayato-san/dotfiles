@@ -2,3 +2,5 @@ README.md
 .gitignore
 .git
 .DS_Store
+conf.toml
+scripts

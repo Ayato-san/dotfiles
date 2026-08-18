@@ -7,16 +7,17 @@
 
 [init]
   defaultBranch = main
-	
+
 [push]
   autoSetupRemote = true
 
 [pull]
 	rebase = true
 
+[fetch]
+  prune = true
+
 [commit]
   template = "~/.gitmessage"
 
-[fetch]
-  prune = true
 

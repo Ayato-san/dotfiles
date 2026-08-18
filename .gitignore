@@ -1,6 +1,10 @@
 .DS_Store
+conf.toml
 .config/tmux/plugins
 .config/alacritty/themes
+.config/bat/themes
+.config/delta/themes
+.config/lazygit/blue.yml
 .config/gh
 .config/configstore
 .config/github-copilot

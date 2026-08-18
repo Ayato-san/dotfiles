@@ -1,5 +1,5 @@
 {
-  description = "ZenFul nix-darwin system flake";
+  description = "Multi-tier cross-platform system setup";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -9,173 +9,51 @@
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
   };
 
-  outputs = inputs @ { 
-    self, 
-    nix-darwin, 
-    nixpkgs, 
-    mac-app-util,
-    nix-homebrew
-  }: let
-    configuration = { pkgs, config, ... }: {
-      # Custom Overlays
-      nixpkgs.overlays = [
-        (final: prev: {
-          alacritty = prev.alacritty.overrideAttrs (old: {
-            postInstall =
-              (old.postInstall or "")
-              + ''
-                cp ${./assets/alacritty.icns} $out/Applications/Alacritty.app/Contents/Resources/alacritty.icns
-              '';
-          });
-          moonlight-qt = prev.moonlight-qt.override {
-            ffmpeg = prev.ffmpeg_7;
-          };
-        })
-      ];
-
-      system.primaryUser = "ayato";
-
-      # List packages installed in system profile. To search by name, run:
-      # $ nix-env -qaP | grep wget
-      environment.systemPackages =
-        [ 
-          pkgs.alacritty
-          pkgs.ansible
-          pkgs.ast-grep
-          pkgs.bat
-          pkgs.delta
-          pkgs.eza
-          pkgs.fd
-          pkgs.ffmpeg
-          pkgs.fzf
-          pkgs.gh
-          pkgs.git
-          pkgs.imagemagick
-          pkgs.kubectl
-          pkgs.lazygit
-          pkgs.luarocks
-          pkgs.localsend
-          pkgs.moonlight-qt
-          pkgs.neovim
-          pkgs.nodejs
-          pkgs.notion-app
-          pkgs.oh-my-posh
-          pkgs.proton-pass-cli
-          pkgs.proton-vpn
-          pkgs.python3
-          pkgs.rust-analyzer
-          pkgs.rustup
-          pkgs.ripgrep
-          pkgs.spotify
-          pkgs.stow
-          pkgs.tealdeer
-          pkgs.terraform
-          pkgs.tmux
-          pkgs.wget
-          pkgs.yarn-berry
-        ];
-
-      # Homebrew packages installed in system profile.
-      homebrew = {
-        enable = true;
-        onActivation = {
-          autoUpdate = true;
-          upgrade = true;
-          cleanup = "zap";
-        };
-        brews = [];
-        casks = [
-          "discord"
-          "docker-desktop"
-          "font-inter"
-          "font-montserrat"
-          "font-poppins"
-          "proton-mail"
-          "proton-drive"
-          "steam"
-          "zen"
-        ];
-      };
-
-      # List fonts installed in system profile.
-      fonts.packages =
-        [
-          pkgs.nerd-fonts.jetbrains-mono
-        ];
-
-      environment.pathsToLink= [
-        "/share/terminfo"
-      ];
-
-      # Set the hostname of the system. This is used by the systemd service manager and other tools to identify the machine.
-      networking.hostName = "asgard";
-      networking.localHostName = "asgard";
-      networking.computerName = "asgard";
-
-      # Necessary for using flakes on this system.
-      nix = {
-        gc = {
-          automatic = true;
-          interval = {
-            Hour = 3;
-            Minute = 15;
-            Weekday = 7;
-          };
-          options = "--delete-older-than 14d";
-        };
-        optimise.automatic = true;
-        registry.nixpkgs.flake = nixpkgs;
-        settings = {
-          auto-optimise-store = true;
-          experimental-features = "nix-command flakes";
-        };
-      };
-
-      # set the allowUnfreePredicate to allow specific unfree packages
-      nixpkgs.config.allowUnfreePredicate = pkg:
-        builtins.elem (pkgs.lib.getName pkg) [
-          "notion-app"
-          "spotify"
-          "terraform"
-        ];
-
-      # Enable alternative shell support in nix-darwin.
-      # programs.fish.enable = true;
-
-      # Set Git commit hash for darwin-version.
-      system.configurationRevision = self.rev or self.dirtyRev or null;
-
-      # Used for backwards compatibility, please read the changelog before changing.
-      # $ darwin-rebuild changelog
-      system.stateVersion = 6;
-
-      # The platform the configuration will be used on.
-      nixpkgs.hostPlatform = "aarch64-darwin";
-    };
-  in
-  {
-    # Build darwin flake
-    darwinConfigurations."asgard" = nix-darwin.lib.darwinSystem {
-      modules = 
-        [ 
+  outputs = inputs @ { self, nix-darwin, nixpkgs, mac-app-util, nix-homebrew } : {
+    # --- macOS Configurations ---
+    darwinConfigurations = {
+      "desktop-mac" = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        specialArgs = { inherit inputs; };
+        modules = [ 
+          ./modules/desktop.nix
           mac-app-util.darwinModules.default # Enables trampoline app generation automatically
-          configuration
           nix-homebrew.darwinModules.nix-homebrew
           {
             nix-homebrew = {
+              # Enable Homebrew support in Nix-managed macOS systems
               enable = true;
               # Apple Silicon Only
               enableRosetta = false;
               # User owning the homebrew prefix
               user = "ayato";
-              
+              # Automatically migrate existing Homebrew packages to Nix-managed Homebrew
               autoMigrate = true;
             };
            }
         ];
+      };
     };
 
-    # Expose the packages set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."asgard".pkgs;
+    # --- Linux Configurations ---
+    nixosConfigurations = {
+      "server" = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./modules/server.nix ];
+      };
+
+      "dev" = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./modules/min.nix ];
+      };
+
+      "desktop" = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./modules/desktop.nix ];
+      };
+    };
   };
 }
