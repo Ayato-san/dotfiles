@@ -33,7 +33,12 @@ server | dev | desktop) ;;
   ;;
 esac
 
-# 5. Update the nix flake configuration based on the OS and config values
+# 5. Pull the latest changes from the dotfiles repository
+git -C "$HOME/dotfiles" pull >/dev/null 2>&1 || {
+  echo "Error: Failed to pull latest changes from the dotfiles repository." >&2
+}
+
+# 6. Update the nix flake configuration based on the OS and config values
 case "$OS" in
 darwin)
   sudo darwin-rebuild switch --flake "$HOME/.config/nix#$CONFIG-mac"
@@ -43,5 +48,5 @@ linux)
   ;;
 esac
 
-# 6. Sync external resources based on the configuration file
+# 7. Sync external resources based on the configuration file
 last_phase "$CONFIG"

@@ -177,4 +177,14 @@ last_phase() {
     mkdir -p "$HOME/.tmux/plugins"
     git clone "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
   fi
+
+  # 4. Run install/update/clean of tpm
+  SCRIPTS_DIR="$HOME/.tmux/plugins/tpm/scripts"
+  HELPERS_DIR="$SCRIPTS_DIR/helpers"
+  "$SCRIPTS_DIR/install_plugins.sh" --tmux-echo >/dev/null 2>&1
+  "$SCRIPTS_DIR/update_plugins.sh" --tmux-echo >/dev/null 2>&1
+  "$SCRIPTS_DIR/clean_plugins.sh" --tmux-echo >/dev/null 2>&1
+  # shellcheck source=/dev/null
+  . "$HELPERS_DIR/tmux_utils.sh"
+  reload_tmux_environment
 }

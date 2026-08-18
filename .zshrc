@@ -94,8 +94,8 @@ alias c='clear'
 alias bat="$CMD_BAT"
 
 # Scripts aliases
-alias supdate="$HOME/dotfiles/scripts/update.sh"
 alias sinstall="$HOME/dotfiles/scripts/install.sh"
+alias supdate="$HOME/dotfiles/scripts/update.sh"
 
 # Editor Aliases
 alias nano='$EDITOR'

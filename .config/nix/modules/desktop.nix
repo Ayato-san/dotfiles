@@ -1,4 +1,7 @@
 { pkgs, lib, inputs, ... } :
+let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+in
 {
   imports = [ ./dev.nix ]; # Pulls all Dev packages automatically
 
@@ -15,15 +18,15 @@
   ]
 
   # 2. Linux-only GUI applications (installed via Nix)
-  ++ lib.optionals (!stdenv.isDarwin) [
+  ++ lib.optionals (!isDarwin) [
     discord
     kicad
     steam
   ];
 
- # 3. macOS-only GUI applications (installed via Homebrew Casks)
+  # 3. macOS-only GUI applications (installed via Homebrew Casks)
   # Requires nix-darwin's homebrew module
-  homebrew = lib.mkIf pkgs.stdenv.isDarwin {
+  homebrew = lib.mkIf isDarwin {
     enable = true;
     onActivation = {
       autoUpdate = true;
@@ -34,9 +37,6 @@
     casks = [
       "discord"
       "docker-desktop"
-      # "font-inter"
-      # "font-montserrat"
-      # "font-poppins"
       "kicad"
       "proton-mail"
       "proton-drive"
@@ -45,22 +45,22 @@
     ];
   };
 
-  # Allow unfree packages for specific applications
-  nixpkgs.config.allowUnfreePredicate = pkg : builtins.elem (pkgs.lib.getName pkg) [
+  # 4. Allow unfree packages for specific applications
+  nixpkgs.config.allowUnfreePredicate = pkg : builtins.elem (lib.getName pkg) [
     "notion-app"
     "spotify"
     "steam"
     "terraform"
   ];
 
-  # Override specific packages with custom configurations
+  # 5. Override specific packages with custom configurations
   nixpkgs.overlays = [
     (final: prev: {
       # Runs on all platforms (Linux & macOS)
-      moonlight-qt = prev.moonlight-qt.override {
-        ffmpeg = prev.ffmpeg_7;
-      };
-    } // lib.optionalAttrs prev.stdenv.isDarwin {
+      # moonlight-qt = prev.moonlight-qt.override {
+      #   ffmpeg = prev.ffmpeg_8;
+      # };
+    } // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
       # Runs ONLY on macOS
       alacritty = prev.alacritty.overrideAttrs (old: {
         postInstall =
@@ -72,7 +72,7 @@
     })
   ];
 
-  # Fonts installed in system profile
+  # 6. Fonts installed in system profile
   fonts.packages = with pkgs; [
     inter
     montserrat
@@ -80,13 +80,13 @@
     poppins
   ];
 
-  # Add additional paths to link in the system profile for macOS
-  environment.pathsToLink = lib.optionals pkgs.stdenv.isDarwin [
+  # 7. Add additional paths to link in the system profile for macOS
+  environment.pathsToLink = lib.optionals isDarwin [
     "/share/terminfo"
   ];
 
-  # Set system-specific configurations for macOS
-  system = lib.mkIf pkgs.stdenv.isDarwin {
+  # 8. Set system-specific configurations for macOS
+  system = lib.mkIf isDarwin {
     # Set Git commit hash for darwin-version
     configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
     # Used for backwards compatibility on nix-darwin
@@ -95,21 +95,21 @@
     primaryUser = "ayato";
   };
 
-  # Hostname configurations separated per OS
+  # 9. Hostname configurations separated per OS
   networking = lib.mkMerge [
-    (lib.mkIf pkgs.stdenv.isDarwin {
+    (lib.mkIf isDarwin {
       hostName = "asgard";
       localHostName = "asgard";
       computerName = "asgard";
     })
-    (lib.mkIf (!pkgs.stdenv.isDarwin) {
+    (lib.mkIf (!isDarwin) {
       hostName = "vanaheim";
       # localHostName = "vanaheim";
       # computerName = "vanaheim";
     })
   ];
 
-  # nix settings for garbage collection, optimisation, and flake registry
+  # 10. nix settings for garbage collection, optimisation, and flake registry
   nix = {
     gc = {
       automatic = true;

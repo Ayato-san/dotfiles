@@ -1,49 +1,57 @@
-# Configuring macOS with Nix and GNU Stow
+# Dotfiles
+
+This repo contains my dotfile configuration, allowing for a consistent computing
+experience across multiple machines/OS.
 
 ## Installation
 
-### Package manager installation
+<!-- markdownlint-disable MD033 -->
+<details open>
+<summary>Remote installation</summary>
+
+Run the following command to install the dotfiles directly from the repository:
+
+<!-- markdownlint-disable MD013 -->
+```bash
+curl -L "https://raw.githubusercontent.com/Ayato-san/dotfiles/refs/heads/main/scripts/install.sh" | bash
+```
+<!-- markdownlint-enable MD013 -->
+</details>
+
+<details>
+<summary>Manual installation</summary>
+
+clone the repo and run the following commands:
 
 ```bash
-curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh
+git clone https://github.com/Ayato-san/dotfiles.git ~/dotfiles
 ```
+
+then run the installation script:
 
 ```bash
-nix flake init -t nix-darwin --extra-experimental-features "nix-command flakes"
+~/dotfiles/scripts/install.sh
 ```
+
+</details>
+<!-- markdownlint-enable MD033 -->
+
+> [!NOTE]
+> If tmux plugin manager is not installed, you can run `prefix + I`
+
+## Update
+
+For updating the dotfiles, you can run the following command:
 
 ```bash
-sudo nix run nix-darwin/master#darwin-rebuild --extra-experimental-features \
-    "nix-command flakes" -- switch --flake ~/dotfiles/.config/nix#asgard
+supdate
 ```
 
-then restart your terminal to make the command `darwin-rebuild` available.
+> [!NOTE]
+> If you want to force the tmux plugin updating, you can run `prefix + U`
 
-### Synchornize dotfiles with GNU Stow
+## Inspiration
 
-```bash
-stow .
-```
-
-### Tmux initialization
-
-Once everything has been installed it's time to run TPM, install first:
-
-```bash
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-```
-
-Then run `prefix + I`
-
-### Retrieve alacritty themes
-
-```bash
-curl -LO --output-dir ~/.config/alacritty/themes https://github.com/catppuccin/alacritty/raw/main/catppuccin-macchiato.toml
-```
-
-## If any changes is done to `.config/nix/flake.nix` or want to update the system
-
-```bash
-nix flake update
-sudo darwin-rebuild switch --flake ~/.config/nix#asgard
-```
+The inspiration for this configuration comes from the [dotfiles by elliottminns](https://github.com/elliottminns/dotfiles).
+I'd suggest watching his videos ([@dreamsofcode](https://youtube.com/@dreamsofcode),
+[@dreamsofautonomy](https://youtube.com/@dreamsofautonomy)).
