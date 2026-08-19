@@ -178,7 +178,19 @@ last_phase() {
   echo "Resyncing dotfiles..."
   stow .
 
-  # 3. Update tpm (Tmux Plugin Manager)
+  # 3. Configure Codex MCP servers without replacing its app-managed config.
+  if [ "$_config" = "desktop" ] || [ "$_config" = "dev" ]; then
+    if command -v codex >/dev/null 2>&1; then
+      if codex mcp get context7 >/dev/null 2>&1; then
+        echo "Context7 MCP is already configured."
+      else
+        echo "Configuring Context7 MCP..."
+        codex mcp add context7 --url "https://mcp.context7.com/mcp"
+      fi
+    fi
+  fi
+
+  # 4. Update tpm (Tmux Plugin Manager)
   if [ -d "$HOME/.tmux/plugins/tpm" ]; then
     echo "Pulling latest changes for tpm..."
     git -C "$HOME/.tmux/plugins/tpm" pull
@@ -188,7 +200,7 @@ last_phase() {
     git clone "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
   fi
 
-  # 4. Run install/update/clean of tpm
+  # 5. Run install/update/clean of tpm
   SCRIPTS_DIR="$HOME/.tmux/plugins/tpm/scripts"
   HELPERS_DIR="$SCRIPTS_DIR/helpers"
   "$SCRIPTS_DIR/install_plugins.sh" --tmux-echo >/dev/null 2>&1
