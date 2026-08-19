@@ -7,6 +7,7 @@
   environment.systemPackages = with pkgs; [
     ansible
     bat
+    codex
     eza
     gh
     kubectl
