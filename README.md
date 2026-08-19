@@ -1,7 +1,11 @@
 # Dotfiles
 
-This repo contains my dotfile configuration, allowing for a consistent computing
-experience across multiple machines/OS.
+This repository contains my personal dotfiles and Nix package configurations for
+Apple Silicon macOS and x86-64 Linux machines.
+
+> [!IMPORTANT]
+> The Nix configuration contains machine-specific values, including my username
+> and hostnames. Review and adapt it before installing it on another machine.
 
 ## Installation
 
@@ -9,11 +13,11 @@ experience across multiple machines/OS.
 <details open>
 <summary>Remote installation</summary>
 
-Run the following command to install the dotfiles directly from the repository:
+The installer requires `git`, `curl`, and `sudo`. To download and run it directly:
 
 <!-- markdownlint-disable MD013 -->
 ```bash
-curl -L "https://raw.githubusercontent.com/Ayato-san/dotfiles/refs/heads/main/scripts/install.sh" | bash
+curl -fsSL "https://raw.githubusercontent.com/Ayato-san/dotfiles/refs/heads/main/scripts/install.sh" | sh
 ```
 <!-- markdownlint-enable MD013 -->
 </details>
@@ -21,13 +25,13 @@ curl -L "https://raw.githubusercontent.com/Ayato-san/dotfiles/refs/heads/main/sc
 <details>
 <summary>Manual installation</summary>
 
-clone the repo and run the following commands:
+Clone the repository:
 
 ```bash
 git clone https://github.com/Ayato-san/dotfiles.git ~/dotfiles
 ```
 
-then run the installation script:
+Then run the installation script:
 
 ```bash
 ~/dotfiles/scripts/install.sh
@@ -36,19 +40,24 @@ then run the installation script:
 </details>
 <!-- markdownlint-enable MD033 -->
 
+The installer installs Nix when necessary, links the dotfiles with GNU Stow, and
+synchronizes the tmux plugins. On Linux, it prompts you to choose the `server`,
+`dev`, or `desktop` configuration; macOS uses `desktop`.
+
 > [!NOTE]
-> If tmux plugin manager is not installed, you can run `prefix + I`
+> Inside tmux, press `prefix + I` to install any configured plugins that are
+> missing. TPM itself is installed by the installation script.
 
 ## Update
 
-For updating the dotfiles, you can run the following command:
+After installation, open a new Zsh session and run:
 
 ```bash
 supdate
 ```
 
 > [!NOTE]
-> If you want to force the tmux plugin updating, you can run `prefix + U`
+> Inside tmux, press `prefix + U` to update the installed tmux plugins manually.
 
 ## Inspiration
 
