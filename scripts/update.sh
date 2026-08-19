@@ -1,9 +1,12 @@
 #!/bin/sh
 
-set -e
+set -eu
+
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+CONFIG_FILE="${CONFIG_FILE:-$DOTFILES_DIR/conf.toml}"
 
 # shellcheck source=scripts/utils.sh
-. "$HOME/dotfiles/scripts/utils.sh"
+. "$DOTFILES_DIR/scripts/utils.sh"
 
 # 1. Check if the configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -34,17 +37,18 @@ server | dev | desktop) ;;
 esac
 
 # 5. Pull the latest changes from the dotfiles repository
-git -C "$HOME/dotfiles" pull >/dev/null 2>&1 || {
+git -C "$DOTFILES_DIR" pull --ff-only || {
   echo "Error: Failed to pull latest changes from the dotfiles repository." >&2
+  exit 1
 }
 
 # 6. Update the nix flake configuration based on the OS and config values
 case "$OS" in
 darwin)
-  sudo darwin-rebuild switch --flake "$HOME/.config/nix#$CONFIG-mac"
+  sudo darwin-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
   ;;
 linux)
-  sudo nixos-rebuild switch --flake "$HOME/.config/nix#$CONFIG"
+  sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   ;;
 esac
 

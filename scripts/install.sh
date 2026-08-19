@@ -1,18 +1,29 @@
 #!/bin/sh
 
-set -e
+set -eu
 
-# shellcheck source=scripts/utils.sh
-. "$HOME/dotfiles/scripts/utils.sh"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+CONFIG_FILE="${CONFIG_FILE:-$DOTFILES_DIR/conf.toml}"
 
 OS=""
 CONFIG=""
 IS_WSL=false
 
 # 1. Clone the repo if it's run through curl install and the dotfiles directory doesn't exist
-if [ ! -d "$HOME/dotfiles" ]; then
-  git clone "https://github.com/Ayato-san/dotfiles.git" "$HOME/dotfiles"
+if [ ! -d "$DOTFILES_DIR/.git" ]; then
+  if [ -e "$DOTFILES_DIR" ]; then
+    echo "Error: '$DOTFILES_DIR' exists but is not a Git repository." >&2
+    exit 1
+  fi
+  command -v git >/dev/null 2>&1 || {
+    echo "Error: git is required to install these dotfiles." >&2
+    exit 1
+  }
+  git clone "https://github.com/Ayato-san/dotfiles.git" "$DOTFILES_DIR"
 fi
+
+# shellcheck source=scripts/utils.sh
+. "$DOTFILES_DIR/scripts/utils.sh"
 
 # 2. Determine the OS and set the appropriate configuration
 case "$(uname -s)" in
@@ -28,7 +39,7 @@ Linux*)
   OS="linux"
   ;;
 *)
-  echo "Invalid OS"
+  echo "Error: Unsupported operating system: $(uname -s)" >&2
   exit 1
   ;;
 esac
@@ -75,7 +86,7 @@ else
 fi
 
 # 5. Install Nix package manager if not already installed
-if [ ! -x "$(command -v nix)" ]; then
+if ! command -v nix >/dev/null 2>&1; then
   echo "Installing Nix package manager..."
   # Install Nix package manager
   case "$OS" in
@@ -86,7 +97,8 @@ if [ ! -x "$(command -v nix)" ]; then
     curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --daemon
     ;;
   esac
-  if [ $IS_WSL ]; then
+  if [ "$IS_WSL" = true ]; then
+    echo "WSL detected. Enable systemd in /etc/wsl.conf if it is not already enabled."
     set_toml_val "boot" "systemd" "true" "/etc/wsl.conf"
   fi
 else
@@ -97,10 +109,10 @@ fi
 case "$OS" in
 "darwin")
   sudo nix run nix-darwin/master#darwin-rebuild --extra-experimental-features \
-    "nix-command flakes" -- switch --flake "$HOME/dotfiles/.config/nix#$CONFIG-mac"
+    "nix-command flakes" -- switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
   ;;
 "linux")
-  sudo nixos-rebuild switch --flake "$HOME/dotfiles/.config/nix#$CONFIG"
+  sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   ;;
 esac
 
