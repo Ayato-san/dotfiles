@@ -75,6 +75,12 @@ set_toml_val "computer" "os" "$OS" "$CONFIG_FILE"
 if [ "$OS" = "darwin" ]; then
   set_toml_val "computer" "config" "$CONFIG" "$CONFIG_FILE"
 else
+  if ! exec 3</dev/tty; then
+    echo "Error: A terminal is required to select the Linux environment." >&2
+    echo "Run this installer from an interactive terminal." >&2
+    exit 1
+  fi
+
   echo "Select environment:"
   echo "1) server"
   echo "2) dev"
@@ -82,7 +88,7 @@ else
 
   while true; do
     printf "Enter option [1-3]: "
-    read -r choice
+    read -r choice <&3
     case "$choice" in
     1 | server)
       CONFIG="server"
@@ -155,3 +161,24 @@ esac
 
 # 8. Sync external resources based on the configuration file
 last_phase "$CONFIG"
+
+# 9. Set Zsh as the user's default login shell
+if [ -x "$HOME/.nix-profile/bin/zsh" ]; then
+  ZSH_BIN="$HOME/.nix-profile/bin/zsh"
+else
+  ZSH_BIN="$(command -v zsh || true)"
+fi
+
+if [ -z "$ZSH_BIN" ]; then
+  echo "Error: zsh was installed but could not be found." >&2
+  exit 1
+fi
+
+if ! grep -qxF "$ZSH_BIN" /etc/shells; then
+  sudo sh -c 'printf "%s\n" "$1" >> /etc/shells' sh "$ZSH_BIN"
+fi
+
+if [ "${SHELL:-}" != "$ZSH_BIN" ]; then
+  echo "Changing the default shell to $ZSH_BIN..."
+  chsh -s "$ZSH_BIN" </dev/tty
+fi
