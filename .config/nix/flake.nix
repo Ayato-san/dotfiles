@@ -46,7 +46,7 @@
       "dev" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./modules/min.nix ];
+        modules = [ ./modules/dev.nix ];
       };
 
       "desktop" = nixpkgs.lib.nixosSystem {

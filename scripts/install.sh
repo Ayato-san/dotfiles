@@ -106,13 +106,15 @@ else
 fi
 
 # 6. Run the update script to apply the configuration
+NIX_BIN="$(command -v nix)"
 case "$OS" in
 "darwin")
-  sudo nix run nix-darwin/master#darwin-rebuild --extra-experimental-features \
+  sudo "$NIX_BIN" run nix-darwin/master#darwin-rebuild --extra-experimental-features \
     "nix-command flakes" -- switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
   ;;
 "linux")
-  sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
+  sudo "$NIX_BIN" run nixpkgs#nixos-rebuild --extra-experimental-features \
+    "nix-command flakes" -- switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   ;;
 esac
 
