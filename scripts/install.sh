@@ -8,24 +8,31 @@ CONFIG_FILE="${CONFIG_FILE:-$DOTFILES_DIR/conf.toml}"
 OS=""
 CONFIG=""
 IS_WSL=false
+IS_NIXOS=false
 
-# 1. Clone the repo if it's run through curl install and the dotfiles directory doesn't exist
+# 1. Verify required commands
+command -v git >/dev/null 2>&1 || {
+  echo "Error: git is required to install these dotfiles." >&2
+  exit 1
+}
+command -v xz >/dev/null 2>&1 || {
+  echo "Error: xz is required to install these dotfiles." >&2
+  exit 1
+}
+
+# 2. Clone the repo if it's run through curl install and the dotfiles directory doesn't exist
 if [ ! -d "$DOTFILES_DIR/.git" ]; then
   if [ -e "$DOTFILES_DIR" ]; then
     echo "Error: '$DOTFILES_DIR' exists but is not a Git repository." >&2
     exit 1
   fi
-  command -v git >/dev/null 2>&1 || {
-    echo "Error: git is required to install these dotfiles." >&2
-    exit 1
-  }
   git clone "https://github.com/Ayato-san/dotfiles.git" "$DOTFILES_DIR"
 fi
 
 # shellcheck source=scripts/utils.sh
 . "$DOTFILES_DIR/scripts/utils.sh"
 
-# 2. Determine the OS and set the appropriate configuration
+# 3. Determine the OS and set the appropriate configuration
 case "$(uname -s)" in
 Darwin*)
   OS="darwin"
@@ -37,6 +44,20 @@ Linux*)
   fi
 
   OS="linux"
+  if [ -e /etc/NIXOS ]; then
+    IS_NIXOS=true
+  elif [ -r /etc/os-release ]; then
+    # Standalone Home Manager is intentionally supported on these distributions.
+    # shellcheck source=/dev/null
+    . /etc/os-release
+    case "$ID" in
+    debian | fedora | arch) ;;
+    *)
+      echo "Error: Unsupported Linux distribution '$ID'. Expected Debian, Fedora, Arch, or NixOS." >&2
+      exit 1
+      ;;
+    esac
+  fi
   ;;
 *)
   echo "Error: Unsupported operating system: $(uname -s)" >&2
@@ -44,12 +65,12 @@ Linux*)
   ;;
 esac
 
-# 3. Check if the configuration file exists
+# 4. Check if the configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
   touch "$CONFIG_FILE"
 fi
 
-# 4. Set the OS and config values in the configuration file
+# 5. Set the OS and config values in the configuration file
 set_toml_val "computer" "os" "$OS" "$CONFIG_FILE"
 if [ "$OS" = "darwin" ]; then
   set_toml_val "computer" "config" "$CONFIG" "$CONFIG_FILE"
@@ -85,7 +106,7 @@ else
   set_toml_val "computer" "config" "$CONFIG" "$CONFIG_FILE"
 fi
 
-# 5. Install Nix package manager if not already installed
+# 6. Install Nix package manager if not already installed
 if ! command -v nix >/dev/null 2>&1; then
   echo "Installing Nix package manager..."
   # Install Nix package manager
@@ -105,18 +126,32 @@ else
   echo "Nix is already installed."
 fi
 
-# 6. Run the update script to apply the configuration
+# 7. Run the update script to apply the configuration
 NIX_BIN="$(command -v nix)"
+# Home Manager invokes Nix again internally, so make the flake features available
+# to child processes as well as to the initial `nix run` command.
+NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
+}extra-experimental-features = nix-command flakes"
+export NIX_CONFIG
+
 case "$OS" in
 "darwin")
-  sudo "$NIX_BIN" run nix-darwin/master#darwin-rebuild --extra-experimental-features \
-    "nix-command flakes" -- switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
+  sudo "$NIX_BIN" --extra-experimental-features "nix-command flakes" \
+    run nix-darwin/master#darwin-rebuild -- switch \
+    --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
   ;;
 "linux")
-  sudo "$NIX_BIN" run nixpkgs#nixos-rebuild --extra-experimental-features \
-    "nix-command flakes" -- switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
+  if [ "$IS_NIXOS" = true ]; then
+    sudo "$NIX_BIN" --extra-experimental-features "nix-command flakes" \
+      run nixpkgs#nixos-rebuild -- switch \
+      --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
+  else
+    "$NIX_BIN" --extra-experimental-features "nix-command flakes" \
+      run "$DOTFILES_DIR/.config/nix#home-manager" -- switch \
+      --flake "$DOTFILES_DIR/.config/nix#ayato@$CONFIG"
+  fi
   ;;
 esac
 
-# 7. Sync external resources based on the configuration file
+# 8. Sync external resources based on the configuration file
 last_phase "$CONFIG"

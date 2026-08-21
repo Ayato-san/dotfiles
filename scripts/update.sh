@@ -43,12 +43,22 @@ git -C "$DOTFILES_DIR" pull --ff-only || {
 }
 
 # 6. Update the nix flake configuration based on the OS and config values
+NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
+}extra-experimental-features = nix-command flakes"
+export NIX_CONFIG
+
 case "$OS" in
 darwin)
   sudo darwin-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG-mac"
   ;;
 linux)
-  sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
+  if [ -e /etc/NIXOS ]; then
+    sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
+  else
+    nix --extra-experimental-features "nix-command flakes" \
+      run "$DOTFILES_DIR/.config/nix#home-manager" -- switch \
+      --flake "$DOTFILES_DIR/.config/nix#ayato@$CONFIG"
+  fi
   ;;
 esac
 

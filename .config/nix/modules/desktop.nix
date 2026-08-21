@@ -12,7 +12,6 @@ in
     imagemagick
     localsend
     moonlight-qt
-    notion-app
     proton-vpn
     spotify
   ]
@@ -22,6 +21,11 @@ in
     discord
     kicad
     steam
+  ]
+
+  # Notion's nixpkgs package currently supports Apple Silicon only.
+  ++ lib.optionals isDarwin [
+    notion-app
   ];
 
   # 3. macOS-only GUI applications (installed via Homebrew Casks)

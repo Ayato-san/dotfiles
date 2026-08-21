@@ -1,7 +1,7 @@
 # Dotfiles
 
 This repository contains my personal dotfiles and Nix package configurations for
-Apple Silicon macOS and x86-64 Linux machines.
+Apple Silicon macOS, NixOS, and x86-64 Debian, Fedora, and Arch Linux machines.
 
 > [!IMPORTANT]
 > The Nix configuration contains machine-specific values, including my username
@@ -13,7 +13,7 @@ Apple Silicon macOS and x86-64 Linux machines.
 <details open>
 <summary>Remote installation</summary>
 
-The installer requires `git`, `curl`, and `sudo`. To download and run it directly:
+The installer requires `git`, `curl`, `sudo`, and `xz`. To download and run it directly:
 
 <!-- markdownlint-disable MD013 -->
 ```bash
@@ -42,7 +42,9 @@ Then run the installation script:
 
 The installer installs Nix when necessary, links the dotfiles with GNU Stow, and
 synchronizes the tmux plugins. On Linux, it prompts you to choose the `server`,
-`dev`, or `desktop` configuration; macOS uses `desktop`.
+`dev`, or `desktop` configuration. NixOS uses the corresponding system
+configuration; Debian, Fedora, and Arch use the standalone Home Manager
+configuration. macOS uses `desktop`.
 
 > [!NOTE]
 > Inside tmux, press `prefix + I` to install any configured plugins that are
