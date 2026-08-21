@@ -1,0 +1,31 @@
+# Allow read-only Git inspection without an approval prompt.
+prefix_rule(
+    pattern = ["git", "status"],
+    decision = "allow",
+    justification = "git status only inspects working-tree state",
+    match = [
+        "git status",
+        "git status --short",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "diff"],
+    decision = "allow",
+    justification = "git diff only inspects repository changes",
+    match = [
+        "git diff",
+        "git diff --check",
+        "git diff --cached --stat",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "log"],
+    decision = "allow",
+    justification = "git log only inspects repository history",
+    match = [
+        "git log -5 --oneline",
+        "git log --decorate --stat",
+    ],
+)

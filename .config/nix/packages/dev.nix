@@ -10,3 +10,6 @@ pkgs: with pkgs; [
   terraform
   yarn-berry
 ]
+++ lib.optionals stdenv.hostPlatform.isLinux [
+  gcc
+]
