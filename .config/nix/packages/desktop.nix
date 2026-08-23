@@ -9,6 +9,7 @@ pkgs: with pkgs; [
   moonlight-qt
   montserrat
   nerd-fonts.jetbrains-mono
+  orca-slicer
   poppins
   proton-vpn
   spotify

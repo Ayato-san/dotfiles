@@ -20,6 +20,7 @@ in
   ++ lib.optionals (!isDarwin) [
     discord
     kicad
+    orca-slicer
     steam
   ]
 
@@ -42,6 +43,7 @@ in
       "discord"
       "docker-desktop"
       "kicad"
+      "orcaslicer"
       "proton-mail"
       "proton-drive"
       "steam"
@@ -97,6 +99,10 @@ in
     stateVersion = 6;
     # Set the primary user for Homebrew prefix ownership
     primaryUser = "ayato";
+    defaults.dock = {
+      autohide = true;
+      show-recents = false;
+    };
   };
 
   # 9. Hostname configurations separated per OS
