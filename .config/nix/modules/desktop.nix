@@ -99,9 +99,19 @@ in
     stateVersion = 6;
     # Set the primary user for Homebrew prefix ownership
     primaryUser = "ayato";
-    defaults.dock = {
-      autohide = true;
-      show-recents = false;
+    defaults = {
+      dock = {
+        autohide = true;
+        show-recents = false;
+        mru-spaces = false;
+      };
+      finder = {
+        AppleShowAllExtensions = true;
+        FXPreferredViewStyle = "clmv";
+        FXRemoveOldTrashItems = true;
+      };
+      loginwindow.LoginwindowText = "asgard";
+      screencapture.location = "~/Pictures/screenshots";
     };
   };
 
