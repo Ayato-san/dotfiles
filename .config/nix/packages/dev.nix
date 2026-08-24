@@ -5,6 +5,7 @@ pkgs: with pkgs; [
   eza
   gh
   kubectl
+  kubernetes-helm
   proton-pass-cli
   tealdeer
   terraform

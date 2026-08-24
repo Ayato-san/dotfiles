@@ -91,6 +91,7 @@ alias ll='ls -l'
 alias l='ls -Al'
 alias tree="$CMD_TREE"
 alias c='clear'
+alias k='kubectl'
 alias bat="$CMD_BAT"
 
 # Scripts aliases

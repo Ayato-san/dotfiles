@@ -43,8 +43,7 @@ git -C "$DOTFILES_DIR" pull --ff-only || {
 }
 
 # 6. Update the nix flake configuration based on the OS and config values
-NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
-}extra-experimental-features = nix-command flakes"
+NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG}extra-experimental-features = nix-command flakes"
 export NIX_CONFIG
 
 case "$OS" in
