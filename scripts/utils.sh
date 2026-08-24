@@ -86,6 +86,67 @@ set_toml_val() {
   ' "$_file" >"$_tmp_file" && mv "$_tmp_file" "$_file"
 }
 
+# Set a top-level TOML value while preserving all app-managed sections.
+set_root_toml_val() {
+  _varname="$1"
+  _value="$2"
+  _file="$3"
+  _tmp_file=$(mktemp "${_file}.tmp.XXXXXX") || return 1
+
+  awk -F '=' -v key="$_varname" -v val="$_value" '
+    BEGIN {
+      in_root = 1
+      key_found = 0
+    }
+    /^\[/ {
+      if (in_root && !key_found) {
+        print key " = " val
+        key_found = 1
+      }
+      in_root = 0
+    }
+    in_root && $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+      print key " = " val
+      key_found = 1
+      next
+    }
+    { print $0 }
+    END {
+      if (!key_found) print key " = " val
+    }
+  ' "$_file" >"$_tmp_file" && chmod 600 "$_tmp_file" && mv "$_tmp_file" "$_file"
+}
+
+# Merge portable Codex defaults without tracking its machine-local config.toml.
+sync_codex_defaults() {
+  _defaults_file="$DOTFILES_DIR/.codex/config.defaults.toml"
+  _codex_dir="${CODEX_HOME:-$HOME/.codex}"
+  _codex_config="$_codex_dir/config.toml"
+
+  [ -f "$_defaults_file" ] || return 0
+  mkdir -p "$_codex_dir"
+  if [ ! -f "$_codex_config" ]; then
+    : >"$_codex_config"
+    chmod 600 "$_codex_config"
+  fi
+
+  for _key in model model_reasoning_effort service_tier; do
+    _value=$(awk -F '=' -v key="$_key" '
+      /^\[/ { exit }
+      $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+        value = substr($0, index($0, "=") + 1)
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$_defaults_file")
+    if [ -n "$_value" ]; then
+      set_root_toml_val "$_key" "$_value" "$_codex_config"
+    fi
+  done
+}
+
 # Retrieve the latest commit SHA from the GitHub API for a specific repository
 fetch_github_sha() {
   _url="$1"
@@ -178,7 +239,10 @@ last_phase() {
   echo "Resyncing dotfiles..."
   stow .
 
-  # 3. Configure Codex MCP servers without replacing its app-managed config.
+  # 3. Apply portable Codex defaults without replacing its app-managed config.
+  sync_codex_defaults
+
+  # 4. Configure Codex MCP servers without replacing its app-managed config.
   if [ "$_config" = "desktop" ] || [ "$_config" = "dev" ]; then
     if command -v codex >/dev/null 2>&1; then
       if codex mcp get context7 >/dev/null 2>&1; then
@@ -190,7 +254,7 @@ last_phase() {
     fi
   fi
 
-  # 4. Update tpm (Tmux Plugin Manager)
+  # 5. Update tpm (Tmux Plugin Manager)
   if [ -d "$HOME/.tmux/plugins/tpm" ]; then
     echo "Pulling latest changes for tpm..."
     git -C "$HOME/.tmux/plugins/tpm" pull
@@ -200,7 +264,7 @@ last_phase() {
     git clone "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
   fi
 
-  # 5. Run install/update/clean of tpm
+  # 6. Run install/update/clean of tpm
   SCRIPTS_DIR="$HOME/.tmux/plugins/tpm/scripts"
   HELPERS_DIR="$SCRIPTS_DIR/helpers"
   "$SCRIPTS_DIR/install_plugins.sh" --tmux-echo >/dev/null 2>&1

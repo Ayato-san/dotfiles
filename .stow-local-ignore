@@ -3,4 +3,5 @@ README.md
 .git
 .DS_Store
 conf.toml
+^config\.defaults\.toml$
 scripts
