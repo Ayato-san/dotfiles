@@ -1,5 +1,6 @@
 pkgs: with pkgs; [
   ansible
+  ansible-lint
   bat
   codex
   eza
