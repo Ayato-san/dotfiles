@@ -2,7 +2,6 @@ pkgs: with pkgs; [
   alacritty
   discord
   ffmpeg
-  imagemagick
   inter
   kicad
   localsend

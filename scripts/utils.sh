@@ -117,6 +117,47 @@ set_root_toml_val() {
   ' "$_file" >"$_tmp_file" && chmod 600 "$_tmp_file" && mv "$_tmp_file" "$_file"
 }
 
+# Set a raw TOML value in a section while preserving all other settings.
+set_section_toml_val() {
+  _section="$1"
+  _varname="$2"
+  _value="$3"
+  _file="$4"
+  _tmp_file=$(mktemp "${_file}.tmp.XXXXXX") || return 1
+
+  awk -F '=' -v sec="$_section" -v key="$_varname" -v val="$_value" '
+    BEGIN {
+      in_sec = 0
+      sec_found = 0
+      key_found = 0
+    }
+    /^\[/ {
+      if (in_sec && !key_found) {
+        print key " = " val
+        key_found = 1
+      }
+      current_sec = $0
+      gsub(/^\[|[[:space:]]|\].*$/, "", current_sec)
+      in_sec = (current_sec == sec)
+      if (in_sec) sec_found = 1
+    }
+    in_sec && $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+      print key " = " val
+      key_found = 1
+      next
+    }
+    { print $0 }
+    END {
+      if (in_sec && !key_found) print key " = " val
+      if (!sec_found) {
+        if (NR > 0) print ""
+        print "[" sec "]"
+        print key " = " val
+      }
+    }
+  ' "$_file" >"$_tmp_file" && chmod 600 "$_tmp_file" && mv "$_tmp_file" "$_file"
+}
+
 # Merge portable Codex defaults without tracking its machine-local config.toml.
 sync_codex_defaults() {
   _defaults_file="$DOTFILES_DIR/.codex/config.defaults.toml"
@@ -143,6 +184,27 @@ sync_codex_defaults() {
     ' "$_defaults_file")
     if [ -n "$_value" ]; then
       set_root_toml_val "$_key" "$_value" "$_codex_config"
+    fi
+  done
+
+  for _key in status_line status_line_use_colors; do
+    _value=$(awk -F '=' -v key="$_key" '
+      /^\[/ {
+        section = $0
+        gsub(/^\[|[[:space:]]|\].*$/, "", section)
+        in_tui = (section == "tui")
+        next
+      }
+      in_tui && $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
+        value = substr($0, index($0, "=") + 1)
+        sub(/^[[:space:]]*/, "", value)
+        sub(/[[:space:]]*$/, "", value)
+        print value
+        exit
+      }
+    ' "$_defaults_file")
+    if [ -n "$_value" ]; then
+      set_section_toml_val "tui" "$_key" "$_value" "$_codex_config"
     fi
   done
 }
@@ -237,6 +299,7 @@ last_phase() {
   # 2. Stow the dotfiles
   cd "$DOTFILES_DIR" || return
   echo "Resyncing dotfiles..."
+  mkdir -p "$HOME/.codex"
   stow .
 
   # 3. Apply portable Codex defaults without replacing its app-managed config.
