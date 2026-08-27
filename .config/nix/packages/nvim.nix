@@ -1,6 +1,7 @@
 pkgs: with pkgs; [
   ast-grep
   delta
+  go
   lazygit
   luarocks
   neovim
