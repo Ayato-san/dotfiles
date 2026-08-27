@@ -300,6 +300,7 @@ last_phase() {
   cd "$DOTFILES_DIR" || return
   echo "Resyncing dotfiles..."
   mkdir -p "$HOME/.codex"
+  mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
   stow .
 
   # 3. Apply portable Codex defaults without replacing its app-managed config.

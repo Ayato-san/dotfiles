@@ -50,7 +50,7 @@ bindkey '^x^e' edit-command-line
 
 # History
 HISTSIZE=5000
-HISTFILE=~/.local/share/zsh/history
+HISTFILE="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/history"
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
 setopt appendhistory
