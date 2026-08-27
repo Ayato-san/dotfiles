@@ -14,5 +14,6 @@
 - Prefer these types:
   `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `ci`, `build`
 - Keep commit subjects concise and imperative.
+- Keep commits atomic: each commit must contain one coherent change.
 - Do not add generated-by or AI attributions in commit messages.
 - Before committing, inspect `git diff` and `git status`
