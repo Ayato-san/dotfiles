@@ -46,6 +46,15 @@ synchronizes the tmux plugins. On Linux, it prompts you to choose the `server`,
 configuration; Debian, Fedora, and Arch use the standalone Home Manager
 configuration. macOS uses `desktop`.
 
+For the `dev` and `desktop` configurations, installation checks the GitHub CLI
+authentication status and starts `gh auth login` when authentication is needed.
+
+> [!IMPORTANT]
+> To enable GitHub Copilot suggestions in Neovim, open Neovim and run
+> `:Copilot auth` (or `:Copilot auth signin`) once.
+
+<!-- Separate the adjacent GitHub alerts for markdownlint MD028. -->
+
 > [!NOTE]
 > Inside tmux, press `prefix + I` to install any configured plugins that are
 > missing. TPM itself is installed by the installation script.
@@ -57,6 +66,9 @@ After installation, open a new Zsh session and run:
 ```bash
 supdate
 ```
+
+The update also checks the GitHub CLI authentication status and starts
+`gh auth login` when necessary on `dev` and `desktop` configurations.
 
 > [!NOTE]
 > Inside tmux, press `prefix + U` to update the installed tmux plugins manually.

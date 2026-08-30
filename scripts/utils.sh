@@ -209,6 +209,28 @@ sync_codex_defaults() {
   done
 }
 
+# Ensure the GitHub CLI is authenticated after it has been installed by Nix.
+ensure_gh_auth() {
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "Error: GitHub CLI was not found after applying the configuration." >&2
+    return 1
+  fi
+
+  if gh auth status >/dev/null 2>&1; then
+    echo "GitHub CLI is already authenticated."
+    return 0
+  fi
+
+  echo "GitHub CLI is not authenticated. Starting login..."
+  if ! exec 3</dev/tty; then
+    echo "Error: A terminal is required to authenticate GitHub CLI." >&2
+    return 1
+  fi
+
+  gh auth login <&3
+  exec 3<&-
+}
+
 # Retrieve the latest commit SHA from the GitHub API for a specific repository
 fetch_github_sha() {
   _url="$1"
@@ -306,7 +328,12 @@ last_phase() {
   # 3. Apply portable Codex defaults without replacing its app-managed config.
   sync_codex_defaults
 
-  # 4. Configure Codex MCP servers without replacing its app-managed config.
+  # 4. Authenticate GitHub CLI where it is part of the selected configuration.
+  if [ "$_config" = "desktop" ] || [ "$_config" = "dev" ]; then
+    ensure_gh_auth
+  fi
+
+  # 5. Configure Codex MCP servers without replacing its app-managed config.
   if [ "$_config" = "desktop" ] || [ "$_config" = "dev" ]; then
     if command -v codex >/dev/null 2>&1; then
       if codex mcp get context7 >/dev/null 2>&1; then
@@ -318,7 +345,7 @@ last_phase() {
     fi
   fi
 
-  # 5. Update tpm (Tmux Plugin Manager)
+  # 6. Update tpm (Tmux Plugin Manager)
   if [ -d "$HOME/.tmux/plugins/tpm" ]; then
     echo "Pulling latest changes for tpm..."
     git -C "$HOME/.tmux/plugins/tpm" pull
@@ -328,7 +355,7 @@ last_phase() {
     git clone "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
   fi
 
-  # 6. Run install/update/clean of tpm
+  # 7. Run install/update/clean of tpm
   SCRIPTS_DIR="$HOME/.tmux/plugins/tpm/scripts"
   HELPERS_DIR="$SCRIPTS_DIR/helpers"
   "$SCRIPTS_DIR/install_plugins.sh" --tmux-echo >/dev/null 2>&1
