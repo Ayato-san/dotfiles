@@ -70,8 +70,14 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $real_path'
 # Exported vars
 export PATH="$PATH:/root/.local/bin"
 export SSH_AUTH_SOCK="$HOME/.ssh/proton-pass-agent.sock"
-export EDITOR='nvim'
-export VISUAL='nvim'
+if (( $+commands[nvim] )); then
+  export EDITOR='nvim'
+elif (( $+commands[vim] )); then
+  export EDITOR='vim'
+else
+  export EDITOR='vi'
+fi
+export VISUAL="$EDITOR"
 export BAT_THEME='Catppuccin Macchiato'
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml,$HOME/.config/lazygit/blue.yml"
 export FZF_DEFAULT_OPTS=" \

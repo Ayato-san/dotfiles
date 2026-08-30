@@ -1,5 +1,7 @@
 pkgs: with pkgs; [
+  bat
   curl
+  eza
   fd
   fzf
   git
