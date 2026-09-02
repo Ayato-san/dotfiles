@@ -51,7 +51,7 @@ authentication status and starts `gh auth login` when authentication is needed.
 
 > [!IMPORTANT]
 > To enable GitHub Copilot suggestions in Neovim, open Neovim and run
-> `:Copilot auth` (or `:Copilot auth signin`) once.
+> `:LspCopilotSignIn` once.
 
 <!-- Separate the adjacent GitHub alerts for markdownlint MD028. -->
 
