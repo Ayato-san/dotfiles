@@ -20,6 +20,9 @@
 [commit]
   template = "~/.gitmessage"
 
+[alias]
+  aliases = "!git config --get-regexp '^alias\\.'  | sort | awk 'BEGIN { printf \"%-15s │ %s\\n\", \"Alias\", \"Command\"; printf \"%-15s─┼─%s\\n\", \"───────────────\", \"────────────────────────────────────────\" } { name=$1; sub(/^alias\\./, \"\", name); $1=\"\"; sub(/^ /, \"\"); printf \"%-15s │ %s\\n\", name, $0 }'"
+
 [credential "https://github.com"]
 	helper = "!gh auth git-credential"
 
