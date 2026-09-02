@@ -5,7 +5,9 @@ pkgs: with pkgs; [
   lazygit
   luarocks
   neovim
+  nixfmt
   nodejs
   python3
   rustup
+  statix
 ]
