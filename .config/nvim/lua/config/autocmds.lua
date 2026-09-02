@@ -34,3 +34,65 @@ vim.api.nvim_create_user_command('LspCopilotSignIn', function()
     end)
   end)
 end, {})
+
+vim.api.nvim_create_user_command('FormatProject', function()
+  local conform = require('conform')
+  local files = vim.fn.systemlist('git ls-files')
+
+  if vim.v.shell_error ~= 0 then
+    vim.notify('FormatProject: not inside a Git repository', vim.log.levels.ERROR)
+    return
+  end
+
+  local formatted = 0
+  local skipped = 0
+  local failed = {}
+
+  for _, file in ipairs(files) do
+    if vim.fn.filereadable(file) == 1 then
+      local bufnr = vim.fn.bufadd(file)
+      vim.fn.bufload(bufnr)
+
+      local formatters = conform.list_formatters(bufnr)
+
+      if #formatters == 0 then
+        skipped = skipped + 1
+      else
+        local ok, err = pcall(function()
+          conform.format({
+            bufnr = bufnr,
+            async = false,
+            lsp_format = 'fallback',
+            quiet = true,
+          })
+
+          if vim.bo[bufnr].modified then
+            vim.api.nvim_buf_call(bufnr, function()
+              vim.cmd('silent write')
+            end)
+          end
+        end)
+
+        if ok then
+          formatted = formatted + 1
+        else
+          table.insert(failed, file .. ': ' .. tostring(err))
+        end
+      end
+
+      if vim.api.nvim_buf_is_valid(bufnr) and vim.fn.buflisted(bufnr) == 0 then
+        pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+      end
+    end
+  end
+
+  local msg = ('FormatProject: %d formatted, %d skipped, %d failed'):format(formatted, skipped, #failed)
+
+  if #failed > 0 then
+    vim.notify(msg .. '\n\n' .. table.concat(failed, '\n'), vim.log.levels.WARN)
+  else
+    vim.notify(msg, vim.log.levels.INFO)
+  end
+end, {
+  desc = 'Format all Git-tracked files with Conform',
+})

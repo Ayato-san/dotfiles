@@ -30,3 +30,8 @@ vim.keymap.set('n', '<leader>fe', function()
     vim.api.nvim_set_current_win(explorer_win)
   end
 end, { desc = 'Toggle Explorer Focus' })
+
+-- Format Project
+vim.keymap.set('n', '<leader>cfp', '<cmd>FormatProject<cr>', {
+  desc = 'Format Project',
+})
