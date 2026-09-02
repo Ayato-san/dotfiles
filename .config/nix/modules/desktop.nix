@@ -1,4 +1,9 @@
-{ pkgs, lib, inputs, ... } :
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
 in
@@ -6,28 +11,30 @@ in
   imports = [ ./dev.nix ]; # Pulls all Dev packages automatically
 
   # 1. Native Nix GUI apps available on both Linux and macOS
-  environment.systemPackages = with pkgs; [
-    alacritty
-    ffmpeg
-    imagemagick
-    localsend
-    moonlight-qt
-    proton-vpn
-    spotify
-  ]
+  environment.systemPackages =
+    with pkgs;
+    [
+      alacritty
+      ffmpeg
+      imagemagick
+      localsend
+      moonlight-qt
+      proton-vpn
+      spotify
+    ]
 
-  # 2. Linux-only GUI applications (installed via Nix)
-  ++ lib.optionals (!isDarwin) [
-    discord
-    kicad
-    orca-slicer
-    steam
-  ]
+    # 2. Linux-only GUI applications (installed via Nix)
+    ++ lib.optionals (!isDarwin) [
+      discord
+      kicad
+      orca-slicer
+      steam
+    ]
 
-  # Notion's nixpkgs package currently supports Apple Silicon only.
-  ++ lib.optionals isDarwin [
-    notion-app
-  ];
+    # Notion's nixpkgs package currently supports Apple Silicon only.
+    ++ lib.optionals isDarwin [
+      notion-app
+    ];
 
   # 3. macOS-only GUI applications (installed via Homebrew Casks)
   # Requires nix-darwin's homebrew module
@@ -38,7 +45,7 @@ in
       upgrade = true;
       cleanup = "zap";
     };
-    brews = [];
+    brews = [ ];
     casks = [
       "discord"
       "docker-desktop"
@@ -52,30 +59,34 @@ in
   };
 
   # 4. Allow unfree packages for specific applications
-  nixpkgs.config.allowUnfreePredicate = pkg : builtins.elem (lib.getName pkg) [
-    "notion-app"
-    "spotify"
-    "steam"
-    "terraform"
-  ];
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "notion-app"
+      "spotify"
+      "steam"
+      "terraform"
+    ];
 
   # 5. Override specific packages with custom configurations
   nixpkgs.overlays = [
-    (final: prev: {
-      # Runs on all platforms (Linux & macOS)
-      # moonlight-qt = prev.moonlight-qt.override {
-      #   ffmpeg = prev.ffmpeg_8;
-      # };
-    } // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-      # Runs ONLY on macOS
-      alacritty = prev.alacritty.overrideAttrs (old: {
-        postInstall =
-          (old.postInstall or "")
-          + ''
-          cp ${../assets/alacritty.icns} $out/Applications/Alacritty.app/Contents/Resources/alacritty.icns
+    (
+      final: prev:
+      {
+        # Runs on all platforms (Linux & macOS)
+        # moonlight-qt = prev.moonlight-qt.override {
+        #   ffmpeg = prev.ffmpeg_8;
+        # };
+      }
+      // lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+        # Runs ONLY on macOS
+        alacritty = prev.alacritty.overrideAttrs (old: {
+          postInstall = (old.postInstall or "") + ''
+            cp ${../assets/alacritty.icns} $out/Applications/Alacritty.app/Contents/Resources/alacritty.icns
           '';
-      });
-    })
+        });
+      }
+    )
   ];
 
   # 6. Fonts installed in system profile
