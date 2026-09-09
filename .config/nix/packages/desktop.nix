@@ -8,9 +8,11 @@ pkgs: with pkgs; [
   moonlight-qt
   montserrat
   nerd-fonts.jetbrains-mono
+  obsidian
   orca-slicer
   poppins
   proton-vpn
   spotify
   steam
+  syncthing
 ]

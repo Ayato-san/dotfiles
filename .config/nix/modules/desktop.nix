@@ -19,8 +19,10 @@ in
       imagemagick
       localsend
       moonlight-qt
+      obsidian
       proton-vpn
       spotify
+      syncthing
     ]
 
     # 2. Linux-only GUI applications (installed via Nix)
@@ -63,6 +65,7 @@ in
     pkg:
     builtins.elem (lib.getName pkg) [
       "notion-app"
+      "obsidian"
       "spotify"
       "steam"
       "terraform"
