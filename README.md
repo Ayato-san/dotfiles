@@ -4,8 +4,10 @@ This repository contains my personal dotfiles and Nix package configurations for
 Apple Silicon macOS, NixOS, and x86-64 Debian, Fedora, and Arch Linux machines.
 
 > [!IMPORTANT]
-> The Nix configuration contains machine-specific values, including my username
-> and hostnames. Review and adapt it before installing it on another machine.
+> The Nix configuration contains machine-specific values, including the macOS
+> username and hostnames. Review and adapt it before installing it on another
+> machine. On standalone Linux, the installer automatically uses the current Unix
+> user and home directory.
 
 ## Installation
 

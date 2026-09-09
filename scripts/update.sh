@@ -54,9 +54,14 @@ linux)
   if [ -e /etc/NIXOS ]; then
     sudo nixos-rebuild switch --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   else
+    DOTFILES_USER="$(id -un)"
+    DOTFILES_HOME="$HOME"
+    export DOTFILES_USER DOTFILES_HOME
+
     nix --extra-experimental-features "nix-command flakes" \
       run "$DOTFILES_DIR/.config/nix#home-manager" -- switch \
-      --flake "$DOTFILES_DIR/.config/nix#ayato@$CONFIG"
+      --impure \
+      --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   fi
   ;;
 esac

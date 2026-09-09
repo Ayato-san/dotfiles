@@ -29,6 +29,16 @@
         system = linuxSystem;
         config.allowUnfree = true;
       };
+      linuxUser =
+        let
+          user = builtins.getEnv "DOTFILES_USER";
+        in
+        if user != "" then user else "ayato";
+      linuxHome =
+        let
+          home = builtins.getEnv "DOTFILES_HOME";
+        in
+        if home != "" then home else "/home/${linuxUser}";
       mkHome =
         profile:
         home-manager.lib.homeManagerConfiguration {
@@ -38,8 +48,8 @@
             ./home/${profile}.nix
             {
               home = {
-                username = "ayato";
-                homeDirectory = "/home/ayato";
+                username = linuxUser;
+                homeDirectory = linuxHome;
                 stateVersion = "26.05";
               };
               programs.home-manager.enable = true;
@@ -52,9 +62,9 @@
 
       # Standalone Home Manager configurations for non-NixOS Linux distributions.
       homeConfigurations = {
-        "ayato@server" = mkHome "server";
-        "ayato@dev" = mkHome "dev";
-        "ayato@desktop" = mkHome "desktop";
+        server = mkHome "server";
+        dev = mkHome "dev";
+        desktop = mkHome "desktop";
       };
 
       # --- macOS Configurations ---

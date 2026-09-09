@@ -112,10 +112,18 @@ else
   set_toml_val "computer" "config" "$CONFIG" "$CONFIG_FILE"
 fi
 
+# Detect a complete Nix installation
+NIX_SYSTEM_BIN="/nix/var/nix/profiles/default/bin/nix"
+NIX_DAEMON_PROFILE="/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+NIX_USER_PROFILE="$HOME/.nix-profile/etc/profile.d/nix.sh"
+
 # 6. Install Nix package manager if not already installed
-if ! command -v nix >/dev/null 2>&1; then
+if command -v nix >/dev/null 2>&1; then
+  echo "Nix is already installed."
+elif [ -x "$NIX_SYSTEM_BIN" ]; then
+  echo "Nix is already installed but not loaded in the current shell."
+else
   echo "Installing Nix package manager..."
-  # Install Nix package manager
   case "$OS" in
   "darwin")
     curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh
@@ -128,12 +136,45 @@ if ! command -v nix >/dev/null 2>&1; then
     echo "WSL detected. Enable systemd in /etc/wsl.conf if it is not already enabled."
     set_toml_val "boot" "systemd" "true" "/etc/wsl.conf"
   fi
+fi
+
+# Load Nix into the current installer process.
+#
+# Multi-user installations on Linux and macOS provide nix-daemon.sh.
+# Keep the user-profile fallback for other valid installations.
+if [ -f "$NIX_DAEMON_PROFILE" ]; then
+  . "$NIX_DAEMON_PROFILE"
+elif [ -f "$NIX_USER_PROFILE" ]; then
+  . "$NIX_USER_PROFILE"
+fi
+
+# Standalone Linux uses the multi-user Nix daemon.
+# Do not override the Nix store configuration on macOS or NixOS.
+if [ "$OS" = "linux" ] && [ "$IS_NIXOS" = false ]; then
+  export NIX_REMOTE=daemon
+
+  if [ ! -S /nix/var/nix/daemon-socket/socket ]; then
+    echo "Starting Nix daemon socket..."
+    sudo systemctl restart nix-daemon.socket
+  fi
+
+  if [ ! -S /nix/var/nix/daemon-socket/socket ]; then
+    echo "Error: Nix daemon socket is unavailable." >&2
+    exit 1
+  fi
+fi
+
+# Resolve the Nix executable after loading the profile.
+if command -v nix >/dev/null 2>&1; then
+  NIX_BIN="$(command -v nix)"
+elif [ -x "$NIX_SYSTEM_BIN" ]; then
+  NIX_BIN="$NIX_SYSTEM_BIN"
 else
-  echo "Nix is already installed."
+  echo "Error: Nix was installed but could not be loaded." >&2
+  exit 1
 fi
 
 # 7. Run the update script to apply the configuration
-NIX_BIN="$(command -v nix)"
 # Home Manager invokes Nix again internally, so make the flake features available
 # to child processes as well as to the initial `nix run` command.
 NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
@@ -152,17 +193,19 @@ case "$OS" in
       run nixpkgs#nixos-rebuild -- switch \
       --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   else
+    DOTFILES_USER="$(id -un)"
+    DOTFILES_HOME="$HOME"
+    export DOTFILES_USER DOTFILES_HOME
+
     "$NIX_BIN" --extra-experimental-features "nix-command flakes" \
       run "$DOTFILES_DIR/.config/nix#home-manager" -- switch \
-      --flake "$DOTFILES_DIR/.config/nix#ayato@$CONFIG"
+      --impure \
+      --flake "$DOTFILES_DIR/.config/nix#$CONFIG"
   fi
   ;;
 esac
 
-# 8. Sync external resources based on the configuration file
-last_phase "$CONFIG"
-
-# 9. Set Zsh as the user's default login shell
+# 8. Set Zsh as the user's default login shell
 if [ -x "$HOME/.nix-profile/bin/zsh" ]; then
   ZSH_BIN="$HOME/.nix-profile/bin/zsh"
 else
@@ -179,6 +222,11 @@ if ! grep -qxF "$ZSH_BIN" /etc/shells; then
 fi
 
 if [ "${SHELL:-}" != "$ZSH_BIN" ]; then
-  echo "Changing the default shell to $ZSH_BIN..."
-  chsh -s "$ZSH_BIN" </dev/tty
+  LOGIN_USER="$(id -un)"
+  echo "Changing the default shell for $LOGIN_USER to $ZSH_BIN..."
+  sudo chsh -s "$ZSH_BIN" "$LOGIN_USER" </dev/tty
+  echo "Zsh is now the default shell. Start a new login session to use it."
 fi
+
+# 9. Sync external resources based on the configuration file
+last_phase "$CONFIG"
