@@ -2,11 +2,9 @@
   pkgs,
   lib,
   inputs,
+  isDarwin,
   ...
 }:
-let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-in
 {
   imports = [ ./dev.nix ]; # Pulls all Dev packages automatically
 
@@ -38,29 +36,7 @@ in
       notion-app
     ];
 
-  # 3. macOS-only GUI applications (installed via Homebrew Casks)
-  # Requires nix-darwin's homebrew module
-  homebrew = lib.mkIf isDarwin {
-    enable = true;
-    onActivation = {
-      autoUpdate = true;
-      upgrade = true;
-      cleanup = "zap";
-    };
-    brews = [ ];
-    casks = [
-      "discord"
-      "docker-desktop"
-      "kicad"
-      "orcaslicer"
-      "proton-mail"
-      "proton-drive"
-      "steam"
-      "zen"
-    ];
-  };
-
-  # 4. Allow unfree packages for specific applications
+  # 3. Allow unfree packages for specific applications
   nixpkgs.config.allowUnfreePredicate =
     pkg:
     builtins.elem (lib.getName pkg) [
@@ -71,7 +47,7 @@ in
       "terraform"
     ];
 
-  # 5. Override specific packages with custom configurations
+  # 4. Override specific packages with custom configurations
   nixpkgs.overlays = [
     (
       final: prev:
@@ -92,7 +68,7 @@ in
     )
   ];
 
-  # 6. Fonts installed in system profile
+  # 5. Fonts installed in system profile
   fonts.packages = with pkgs; [
     inter
     montserrat
@@ -100,18 +76,77 @@ in
     poppins
   ];
 
-  # 7. Add additional paths to link in the system profile for macOS
+  # 6. Add additional paths to link in the system profile for macOS
   environment.pathsToLink = lib.optionals isDarwin [
     "/share/terminfo"
   ];
 
-  # 8. Set system-specific configurations for macOS
-  system = lib.mkIf isDarwin {
-    # Set Git commit hash for darwin-version
+  # 7. nix settings for garbage collection, optimisation, and flake registry
+  nix = {
+    gc = {
+      automatic = true;
+      options = "--delete-older-than 14d";
+    }
+    // lib.optionalAttrs isDarwin {
+      interval = {
+        Hour = 3;
+        Minute = 15;
+        Weekday = 7;
+      };
+    }
+    // lib.optionalAttrs (!isDarwin) {
+      dates = "weekly";
+    };
+    optimise.automatic = true;
+    registry.nixpkgs.flake = inputs.nixpkgs;
+    settings = {
+      auto-optimise-store = true;
+      experimental-features = "nix-command flakes";
+    };
+  };
+}
+// lib.optionalAttrs isDarwin {
+  # macOS-only GUI applications installed via Homebrew Casks.
+  homebrew = {
+    enable = true;
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "zap";
+    };
+    brews = [ ];
+    casks = [
+      "discord"
+      "docker-desktop"
+      "kicad"
+      "orcaslicer"
+      "proton-mail"
+      "proton-drive"
+      "steam"
+      "zen"
+    ];
+  };
+
+  # Start Syncthing for the desktop user at login.
+  launchd.user.agents.syncthing.serviceConfig = {
+    ProgramArguments = [
+      "${pkgs.syncthing}/bin/syncthing"
+      "serve"
+      "--no-browser"
+      "--no-restart"
+      "--no-upgrade"
+    ];
+    KeepAlive = {
+      Crashed = true;
+      SuccessfulExit = false;
+    };
+    ProcessType = "Background";
+    RunAtLoad = true;
+  };
+
+  system = {
     configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
-    # Used for backwards compatibility on nix-darwin
     stateVersion = 6;
-    # Set the primary user for Homebrew prefix ownership
     primaryUser = "ayato";
     defaults = {
       dock = {
@@ -129,36 +164,18 @@ in
     };
   };
 
-  # 9. Hostname configurations separated per OS
-  networking = lib.mkMerge [
-    (lib.mkIf isDarwin {
-      hostName = "asgard";
-      localHostName = "asgard";
-      computerName = "asgard";
-    })
-    (lib.mkIf (!isDarwin) {
-      hostName = "vanaheim";
-      # localHostName = "vanaheim";
-      # computerName = "vanaheim";
-    })
-  ];
-
-  # 10. nix settings for garbage collection, optimisation, and flake registry
-  nix = {
-    gc = {
-      automatic = true;
-      interval = {
-        Hour = 3;
-        Minute = 15;
-        Weekday = 7;
-      };
-      options = "--delete-older-than 14d";
-    };
-    optimise.automatic = true;
-    registry.nixpkgs.flake = inputs.nixpkgs;
-    settings = {
-      auto-optimise-store = true;
-      experimental-features = "nix-command flakes";
-    };
+  networking = {
+    hostName = "asgard";
+    localHostName = "asgard";
+    computerName = "asgard";
   };
+}
+// lib.optionalAttrs (!isDarwin) {
+  # Start Syncthing as a systemd service on NixOS desktops.
+  services.syncthing = {
+    enable = true;
+    openDefaultPorts = true;
+  };
+
+  networking.hostName = "vanaheim";
 }

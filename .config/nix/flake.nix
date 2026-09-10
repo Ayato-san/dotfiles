@@ -71,7 +71,10 @@
       darwinConfigurations = {
         "desktop-mac" = nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+            inherit inputs;
+            isDarwin = true;
+          };
           modules = [
             ./modules/desktop.nix
             mac-app-util.darwinModules.default # Enables trampoline app generation automatically
@@ -108,7 +111,10 @@
 
         "desktop" = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+            inherit inputs;
+            isDarwin = false;
+          };
           modules = [ ./modules/desktop.nix ];
         };
       };
