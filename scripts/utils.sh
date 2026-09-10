@@ -344,26 +344,36 @@ last_phase() {
     fi
   fi
 
-  # 6. Update tpm (Tmux Plugin Manager)
+  # 6. Update tpm (Tmux Plugin Manager) and manage its plugins silently.
+  _tpm_status=0
   if [ -d "$HOME/.tmux/plugins/tpm" ]; then
-    echo "Pulling latest changes for tpm..."
-    git -C "$HOME/.tmux/plugins/tpm" pull
+    git -C "$HOME/.tmux/plugins/tpm" pull >/dev/null 2>&1 || _tpm_status=1
   else
-    echo "Cloning tpm repository..."
-    mkdir -p "$HOME/.tmux/plugins"
-    git clone "https://github.com/tmux-plugins/tpm" "$HOME/.tmux/plugins/tpm"
+    mkdir -p "$HOME/.tmux/plugins" >/dev/null 2>&1 || _tpm_status=1
+    if [ "$_tpm_status" -eq 0 ]; then
+      git clone "https://github.com/tmux-plugins/tpm" \
+        "$HOME/.tmux/plugins/tpm" >/dev/null 2>&1 || _tpm_status=1
+    fi
   fi
 
-  # 7. Run install/update/clean of tpm
-  SCRIPTS_DIR="$HOME/.tmux/plugins/tpm/scripts"
-  "$SCRIPTS_DIR/install_plugins.sh"
-  "$SCRIPTS_DIR/update_plugins.sh"
-  "$SCRIPTS_DIR/clean_plugins.sh"
+  if [ "$_tpm_status" -eq 0 ]; then
+    _tpm_bin_dir="$HOME/.tmux/plugins/tpm/bin"
+    "$_tpm_bin_dir/install_plugins" >/dev/null 2>&1 || _tpm_status=1
+    "$_tpm_bin_dir/update_plugins" all >/dev/null 2>&1 || _tpm_status=1
+    "$_tpm_bin_dir/clean_plugins" >/dev/null 2>&1 || _tpm_status=1
+  fi
 
   # Reload the configuration only when a tmux server is already running.
   # TPM's helper is written for Bash and cannot safely be sourced by this POSIX
   # shell script on systems such as Debian, where /bin/sh is dash.
   if tmux list-sessions >/dev/null 2>&1; then
-    tmux source-file "$HOME/.config/tmux/tmux.conf"
+    tmux source-file "$HOME/.config/tmux/tmux.conf" >/dev/null 2>&1 || _tpm_status=1
+  fi
+
+  if [ "$_tpm_status" -eq 0 ]; then
+    echo "TPM updates and installations succeeded."
+  else
+    echo "Error: TPM updates or installations failed." >&2
+    return 1
   fi
 }
