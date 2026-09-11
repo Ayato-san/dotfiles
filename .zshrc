@@ -107,6 +107,7 @@ alias supdate="$HOME/dotfiles/scripts/update.sh"
 # Editor Aliases
 alias nano='$EDITOR'
 alias vim='$EDITOR'
+alias vi='$EDITOR'
 
 # Suffix Aliases
 alias -s md="bat"
