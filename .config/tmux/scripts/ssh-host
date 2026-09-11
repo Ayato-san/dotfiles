@@ -1,0 +1,46 @@
+#!/bin/zsh
+
+emulate -L zsh
+
+pane_pid=$1
+[[ $pane_pid == <-> ]] || exit 0
+
+ssh_pid=$(pgrep -P "$pane_pid" -x ssh | head -n 1)
+[[ -n $ssh_pid ]] || exit 0
+
+command_line=$(ps -ww -o command= -p "$ssh_pid")
+[[ -n $command_line ]] || exit 0
+
+arguments=(${(z)command_line})
+arguments=("${arguments[@]:1}")
+
+destination=""
+while (( ${#arguments} )); do
+  argument=${arguments[1]}
+
+  case "$argument" in
+    --)
+      arguments=("${arguments[@]:1}")
+      destination=${arguments[1]}
+      break
+      ;;
+    -[BbcDEeFIiJLlmOopQRSWw])
+      arguments=("${arguments[@]:2}")
+      ;;
+    -[BbcDEeFIiJLlmOopQRSWw]?*)
+      arguments=("${arguments[@]:1}")
+      ;;
+    -*)
+      arguments=("${arguments[@]:1}")
+      ;;
+    *)
+      destination=$argument
+      break
+      ;;
+  esac
+done
+
+[[ -n $destination ]] || exit 0
+
+hostname=$(ssh -G -- "$destination" 2>/dev/null | awk '$1 == "hostname" { print $2; exit }')
+print -r -- "${hostname:-$destination}"
