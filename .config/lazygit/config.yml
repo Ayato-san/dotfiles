@@ -7,3 +7,34 @@ git:
   log:
     showGraph: when-maximised
     showWholeGraph: true
+customCommands:
+  - key: "z"
+    description: "Resolve merge conflicts"
+    commandMenu:
+      - key: "c"
+        context: "files"
+        description: "Use current changes (add/add)"
+        command: >-
+          ours="$(git rev-parse --verify ':2:{{.SelectedPath}}')" &&
+          theirs="$(git rev-parse --verify ':3:{{.SelectedPath}}')" &&
+          base="$(printf '' | git hash-object -w --stdin)" &&
+          git merge-file -p --object-id --ours "$ours" "$base" "$theirs" > "{{.SelectedPath}}" &&
+          git add -- "{{.SelectedPath}}"
+      - key: "i"
+        context: "files"
+        description: "Use incoming changes (add/add)"
+        command: >-
+          ours="$(git rev-parse --verify ':2:{{.SelectedPath}}')" &&
+          theirs="$(git rev-parse --verify ':3:{{.SelectedPath}}')" &&
+          base="$(printf '' | git hash-object -w --stdin)" &&
+          git merge-file -p --object-id --theirs "$ours" "$base" "$theirs" > "{{.SelectedPath}}" &&
+          git add -- "{{.SelectedPath}}"
+      - key: "b"
+        context: "files"
+        description: "Use both (add/add)"
+        command: >-
+          ours="$(git rev-parse --verify ':2:{{.SelectedPath}}')" &&
+          theirs="$(git rev-parse --verify ':3:{{.SelectedPath}}')" &&
+          base="$(printf '' | git hash-object -w --stdin)" &&
+          git merge-file -p --object-id --union "$ours" "$base" "$theirs" > "{{.SelectedPath}}" &&
+          git add -- "{{.SelectedPath}}"
